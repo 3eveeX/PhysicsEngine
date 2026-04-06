@@ -7,43 +7,28 @@ by Jeffery Myers is marked with CC0 1.0. To view a copy of this license, visit h
 
 */
 
-#include "raylib.h"
-#include "raymath.h"
+
 
 #include "resource_dir.h"	// utility header for SearchAndSetResourceDir
 #include <vector>
+#include "../World.h"
+#include "../Random.h"
 
-struct Body{
-	    Vector2 position;
-		Vector2 velocity;
-		Vector2 acceleration;
-		float mass;
-		float size;
-		float restitution;
-};
 
-float GetRandomFloat() {
-	return (float)GetRandomValue(0, 10000) / 10000.0f;
-}
 
-void AddForce(Body& body, Vector2 force)
-{
-	body.acceleration += force * (1/body.mass);
-}
 
-void Integrator(Body& body, float deltaTime)
-{
-	body.velocity += body.acceleration * deltaTime;
-	body.position += body.velocity * deltaTime;
-}
 
-Vector2 gravity{ 0, 9.81f };
+
+
+
+World world;
+
 
 int main ()
 {
 
-    std::vector<Body> bodies;
-	bodies.reserve(1000);
+    
+	
 	
 	// Tell the window to use vsync and work on high DPI displays
 	SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_HIGHDPI);
@@ -57,6 +42,12 @@ int main ()
 	// Load a texture from the resources directory
 	Texture wabbit = LoadTexture("wabbit_alpha.png");
 	
+
+	SetTargetFPS(60);
+
+	float timeAccum = 0.0f;
+	float fixedTimeStep = 1.0f / 60.0f;
+
 	// game loop
 	while (!WindowShouldClose())		// run the loop until the user presses ESCAPE or presses the Close button on the window
 	{
@@ -73,44 +64,21 @@ int main ()
 
 			body.velocity = direction * (50.0f + GetRandomFloat() * 500);
 			body.acceleration = { 0,0 };
-			body.mass = body.size;
 			body.size = GetRandomValue(5, 20);
-			body.restitution =   GetRandomFloat() -0.1f;
-			bodies.push_back(body);
+			body.mass = body.size;
+			body.restitution = GetRandomFloat();
+			world.AddBody(body);
 		}
 
 		//update
-		for (auto& body : bodies)
+		timeAccum += deltaTime;
+		while (timeAccum > fixedTimeStep)
 		{
-			body.acceleration = { 0, 100 * body.mass };
-			body.velocity.x += body.acceleration.x * deltaTime;
-			body.velocity.y += body.acceleration.y * deltaTime;
-			body.position.x += body.velocity.x * deltaTime;
-			body.position.y += body.velocity.y * deltaTime;
-
-			body.velocity += (gravity * 100) * deltaTime;
-
-			if(body.position.y + body.size> GetScreenHeight())
-			{
-				body.position.y = GetScreenHeight() - body.size;
-				body.velocity.y *= -body.restitution;
-			}
-			if(body.position.x + body.size > GetScreenWidth())
-			{
-				body.position.x = GetScreenWidth() - body.size;
-				body.velocity.x *= -body.restitution;
-			}
-			 else if(body.position.x + body.size < 0)
-			{
-				body.position.x = body.size;
-				body.velocity.x *= -body.restitution;
-			}
-			 else if(body.position.y + body.size < 0)
-			{
-				body.position.y = body.size;
-				body.velocity.y *= -body.restitution;
-			}
+			world.Step(fixedTimeStep);
+			timeAccum -= fixedTimeStep;
 		}
+
+		
 
 		// draw
 		BeginDrawing();
@@ -124,11 +92,7 @@ int main ()
 		// draw our texture to the screen
 		DrawTexture(wabbit, 400, 200, WHITE); 
 
-		for (const auto& body : bodies)
-		 {
-			 
-			 DrawCircleV(body.position, body.size, WHITE);
-		}
+		
 		
 		// end the frame and get ready for the next one  (display frame, poll input, etc...)
 		EndDrawing();
