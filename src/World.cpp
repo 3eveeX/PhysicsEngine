@@ -3,9 +3,10 @@
 
 void World::Step(float dt)
 {
-	
-	for (auto& body : bodies) body.acceleration = Vector2{ 0,0 };
+
+	for (auto& body : bodies) body.acceleration = gravity * body.gravityScale;
 	for (auto& body : bodies) body.AddForce(World::gravity * body.gravityScale * 100.0f);
+	for (auto& effector : effectors) effector->Apply(bodies);
 
 	if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT))
 	{
@@ -25,32 +26,7 @@ void World::Step(float dt)
 
 	for (auto& body : bodies) SemiImplicitEuler(body, dt);
 
-	for (auto& body : bodies)
-	{
-		if (body.position.y + body.size > GetScreenHeight())
-		{
-			body.position.y = GetScreenHeight() - body.size;
-			body.velocity.y *= -body.restitution;
-		}
-		if (body.position.x + body.size > GetScreenWidth())
-		{
-			body.position.x = GetScreenWidth() - body.size;
-			body.velocity.x *= -body.restitution;
-		}
-		else if (body.position.x + body.size < 0)
-		{
-			body.position.x = body.size;
-			body.velocity.x *= -body.restitution;
-		}
-		else if (body.position.y + body.size < 0)
-		{
-			body.position.y = body.size;
-			body.velocity.y *= -body.restitution;
-		}
-
-	}
-
-	
+	UpdateCollision();
 }
 
 void World::Draw()
@@ -59,6 +35,38 @@ void World::Draw()
 	{
 
 		body.Draw();
+	}
+}	
+
+void World::UpdateCollision()
+{
+	contacts.clear();
+	CreateContacts(bodies, contacts);
+	SeparateContacts(contacts);
+
+	// collision
+	for (auto& body : bodies)
+	{
+		if (body.position.x + body.size > GetScreenWidth())
+		{
+			body.position.x = GetScreenWidth() - body.size;
+			body.velocity.x *= -body.restitution;
+		}
+		if (body.position.x - body.size < 0)
+		{
+			body.position.x = body.size;
+			body.velocity.x *= -body.restitution;
+		}
+		if (body.position.y + body.size > GetScreenHeight())
+		{
+			body.position.y = GetScreenHeight() - body.size;
+			body.velocity.y *= -body.restitution;
+		}
+		if (body.position.y - body.size < 0)
+		{
+			body.position.y = body.size;
+			body.velocity.y *= -body.restitution;
+		}
 	}
 }
 

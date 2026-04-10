@@ -301,17 +301,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="Body.h" />
-    <ClInclude Include="Effector.h" />
     <ClInclude Include="include\resource_dir.h" />
-    <ClInclude Include="Integrator.h" />
-    <ClInclude Include="Random.h" />
-    <ClInclude Include="World.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="Body.cpp" />
-    <ClCompile Include="src\main.cpp" />
-    <ClCompile Include="World.cpp" />
+    <ClInclude Include="src\Body.h" />
+    <ClInclude Include="src\collision.h" />
+    <ClInclude Include="src\Effector.h" />
+    <ClInclude Include="src\GravitationalEffector.h" />
+    <ClInclude Include="src\Integrator.h" />
+    <ClInclude Include="src\PointEffector.h" />
+    <ClInclude Include="src\Random.h" />
+    <ClInclude Include="src\World.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="src\icon.ico" />
@@ -326,6 +324,13 @@
     <ProjectReference Include="raylib.vcxproj">
       <Project>{8898EA18-743A-15EF-5DF5-284349369C3F}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\Body.cpp" />
+    <ClCompile Include="src\collision.cpp" />
+    <ClCompile Include="src\GravitationalEffector.cpp" />
+    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\World.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

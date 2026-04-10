@@ -11,24 +11,14 @@ by Jeffery Myers is marked with CC0 1.0. To view a copy of this license, visit h
 
 #include "resource_dir.h"	// utility header for SearchAndSetResourceDir
 #include <vector>
-#include "../World.h"
-#include "../Random.h"
-
-
-
-
-
-
-
-
-World world;
-
+#include "World.h"
+#include "Random.h"
+#include "GravitationalEffector.h"
 
 int main ()
 {
 
     
-	
 	
 	// Tell the window to use vsync and work on high DPI displays
 	SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_HIGHDPI);
@@ -45,9 +35,12 @@ int main ()
 
 	SetTargetFPS(60);
 
+	World world;
+				  
 	float timeAccum = 0.0f;
 	float fixedTimeStep = 1.0f / 60.0f;
 
+	world.AddEffector(new GravityEffector(10000.0f));	 
 	// game loop
 	while (!WindowShouldClose())		// run the loop until the user presses ESCAPE or presses the Close button on the window
 	{
@@ -66,7 +59,7 @@ int main ()
 			body.acceleration = { 0,0 };
 			body.size = GetRandomValue(5, 20);
 			body.mass = body.size;
-			body.restitution = GetRandomFloat();
+			body.restitution = 0.0f;
 			world.AddBody(body);
 		}
 
