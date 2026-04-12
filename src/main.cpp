@@ -59,7 +59,8 @@ int main ()
 			body.acceleration = { 0,0 };
 			body.size = GetRandomValue(5, 20);
 			body.mass = body.size;
-			body.restitution = 0.0f;
+			body.restitution = GetRandomFloat() * 0.9f + 0.1f;
+			body.gravityScale = 2.0f;
 			world.AddBody(body);
 		}
 

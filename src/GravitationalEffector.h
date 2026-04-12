@@ -9,5 +9,5 @@ public:
     void Apply(std::vector<Body>& bodies) override;
 
 private:
-    float strength = 10;
+    float strength = 100;
 };

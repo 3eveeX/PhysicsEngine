@@ -17,7 +17,7 @@ public:
 	void AddEffector(Effector* effector) { effectors.push_back(effector); }
     void UpdateCollision();
 private:
-    const Vector2 gravity = { 0.0f, 0.0f };
+    const Vector2 gravity = { 0.0f, 9.81f };
     std::vector<Body> bodies;
 	std::vector<Effector*> effectors;
     std::vector<Contact> contacts;
