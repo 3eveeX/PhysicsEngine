@@ -4,7 +4,7 @@
 class GravityEffector : public Effector
 {
 public:
-    GravityEffector(float strength) : strength(strength) {}
+	GravityEffector(Vector2 position, float size, float strength) : Effector{ position, size }, strength(strength) {}
 
     void Apply(std::vector<Body>& bodies) override;
 

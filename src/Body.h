@@ -4,9 +4,9 @@
 	 
 enum class BodyType
 {
-	STATIC,
 	DYNAMIC,
-	KINEMATIC
+	KINEMATIC,
+	STATIC
 };
 
 enum class ForceMode{

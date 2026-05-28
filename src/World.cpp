@@ -1,39 +1,34 @@
 #include "World.h"
 #include "Integrator.h"
 
+Vector2 World::gravity = { 0.0f, 9.81f };
+
 void World::Step(float dt)
 {
+	// update gravity
+	for (auto& body : bodies) body.AddForce(gravity * body.gravityScale, ForceMode::Acceleration);
 
-	for (auto& body : bodies) body.acceleration = gravity * body.gravityScale;
-	for (auto& body : bodies) body.AddForce(World::gravity * body.gravityScale * 100.0f);
+	// force effector
 	for (auto& effector : effectors) effector->Apply(bodies);
 
-	if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT))
-	{
-		Vector2 mousePos = GetMousePosition();
-		for (auto& body : bodies)
-		{
-			Vector2 toMouse = mousePos - body.position;
-			float distance = Vector2Length(toMouse);
-			if (distance <= 100)
-			{
-				Vector2 direction = Vector2Normalize(toMouse) * 300000.0f;
-				body.AddForce(direction);
-			}
-		}
-		DrawCircleLinesV(mousePos, 100, RED);
-	}
+	// spring
+	for (auto& spring : springs) spring->Apply(100.0f);
 
-	for (auto& body : bodies) SemiImplicitEuler(body, dt);
+	// integrator
+	for (auto& body : bodies) if (body.bodyType == BodyType::DYNAMIC) SemiImplicitEuler(body, dt);
+	for (int i = 0; i < 4; i++) UpdateCollision();
 
-	UpdateCollision();
+	// reset acceleration
+	for (auto& body : bodies) body.acceleration = Vector2{ 0, 0 };
 }
 
 void World::Draw()
-{
+{			 
+	for (const auto& effector : effectors) {
+		effector->Draw();
+	}
 	for (const auto& body : bodies)
 	{
-
 		body.Draw();
 	}
 }	
@@ -48,27 +43,39 @@ void World::UpdateCollision()
 	// collision
 	for (auto& body : bodies)
 	{
-		if (body.position.x + body.size > GetScreenWidth())
+		if (body.position.x + body.size > boundsMax.x)
 		{
-			body.position.x = GetScreenWidth() - body.size;
+			body.position.x = boundsMax.x - body.size;
 			body.velocity.x *= -body.restitution;
 		}
-		if (body.position.x - body.size < 0)
+		if (body.position.x - body.size < boundsMin.x)
 		{
-			body.position.x = body.size;
+			body.position.x = boundsMin.x + body.size;
 			body.velocity.x *= -body.restitution;
 		}
-		if (body.position.y + body.size > GetScreenHeight())
+		if (body.position.y + body.size > boundsMax.y)
 		{
-			body.position.y = GetScreenHeight() - body.size;
+			body.position.y = boundsMax.y - body.size;
 			body.velocity.y *= -body.restitution;
 		}
-		if (body.position.y - body.size < 0)
+		if (body.position.y - body.size < boundsMin.y)
 		{
-			body.position.y = body.size;
+			body.position.y = boundsMin.y + body.size;
 			body.velocity.y *= -body.restitution;
 		}
 	}
+}
+
+Body* World::GetBodyIntersect(Vector2 position)
+{
+	for(auto& body : bodies)
+	{
+		if(CheckCollisionPointCircle(position, body.position, body.size))
+		{
+			return &body;
+		}
+	}
+	return nullptr;
 }
 
 void World::AddBody(const Body& body)

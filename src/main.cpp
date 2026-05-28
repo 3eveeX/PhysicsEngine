@@ -14,6 +14,27 @@ by Jeffery Myers is marked with CC0 1.0. To view a copy of this license, visit h
 #include "World.h"
 #include "Random.h"
 #include "GravitationalEffector.h"
+#include "PointEffector.h"	 
+#include "AreaEffector.h" 
+#include "DragEffector.h"
+#include "Spring.h"
+#include "world_camera.h"
+
+#include "raylib.h"
+#include "raymath.h"
+
+#define RAYGUI_IMPLEMENTATION
+#include "raygui.h"
+#define GUI_PHYSICS_IMPLEMENTATION
+#pragma warning ( push )
+#pragma warning ( disable : 4576)
+#include "gui_physics.h"
+#pragma warning ( pop )
+
+GuiPhysicsState state;
+
+void AddBody(World& world, WorldCamera& camera);
+void AddEffector(World& world, WorldCamera& camera);
 
 int main ()
 {
@@ -29,49 +50,86 @@ int main ()
 	// Utility function from resource_dir.h to find the resources folder and set it as the current working directory so we can load from it
 	SearchAndSetResourceDir("resources");
 
-	// Load a texture from the resources directory
-	Texture wabbit = LoadTexture("wabbit_alpha.png");
+
+
+	// Get GUI state
+	state = InitGuiPhysics();
+	GuiLoadStyle("raygui/styles/dark/style_dark.rgs");
+	
 	
 
-	SetTargetFPS(60);
-
 	World world;
+	WorldCamera world_camera(Vector2{ GetScreenWidth() / 2.0f, GetScreenHeight() / 2.0f }, 5);
+	world.SetBounds(world_camera.ScreenToWorld({ 0, (float)GetScreenHeight() }), world_camera.ScreenToWorld({ (float)GetScreenWidth(), 0 }));
+	Body* selectedBody = nullptr;
 				  
 	float timeAccum = 0.0f;
-	float fixedTimeStep = 1.0f / 60.0f;
 
-	world.AddEffector(new GravityEffector(10000.0f));	 
+	bool simulate = true;
+	
+	/*world.AddEffector(new PointEffector(Vector2{ 170, 170 }, 200, -30000.0f));
+	world.AddEffector(new GravityEffector(Vector2{ 900, 600 }, 200, 30000.0f));
+	world.AddEffector(new AreaEffector(Vector2{ 900, 170 }, 200, 0, 30000.0f));
+	world.AddEffector(new DragEffector(Vector2{ 170, 600 }, 200, 30.0f));*/
 	// game loop
 	while (!WindowShouldClose())		// run the loop until the user presses ESCAPE or presses the Close button on the window
 	{
-		float deltaTime = GetFrameTime();
-
-		if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT) || (IsKeyDown(KEY_GRAVE) && IsMouseButtonDown(MOUSE_BUTTON_LEFT)))
+		float deltaTime = fminf(GetFrameTime(), 0.1f);
+		SetTargetFPS(state.FPSValue);
+		float fixedTimeStep = 1.0f / state.FPSValue;
+		if(IsKeyPressed(KEY_SPACE))
 		{
-			Body body;
-			body.position = GetMousePosition();
-			float angle = GetRandomFloat() * (2 * PI);
-			Vector2 direction;
-			direction.x = cosf(angle);
-			direction.y = sinf(angle);
-
-			body.velocity = direction * (50.0f + GetRandomFloat() * 500);
-			body.acceleration = { 0,0 };
-			body.size = GetRandomValue(5, 20);
-			body.mass = body.size;
-			body.restitution = GetRandomFloat() * 0.9f + 0.1f;
-			body.gravityScale = 2.0f;
-			world.AddBody(body);
+			state.SimulateActive = !state.SimulateActive;
+		}
+		if(IsKeyPressed(KEY_TAB))
+		{
+			state.PhysicsPanelActive = !state.PhysicsPanelActive;
 		}
 
+		World::SetGravity(Vector2{ 0.0f, state.GravityValue });
+
+		bool mouseOverGui = state.PhysicsPanelActive && CheckCollisionPointRec(GetMousePosition(), Rectangle{ state.anchor02.x + 0, state.anchor02.y + 0, 304, 664 });
+		if (!mouseOverGui)
+		{
+			if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) ||
+				(IsKeyDown(KEY_LEFT_CONTROL) && IsMouseButtonDown(MOUSE_BUTTON_LEFT)))
+			{
+				if (IsKeyDown(KEY_LEFT_SHIFT))
+				{
+					AddEffector(world, world_camera);
+				}
+				else
+				{
+					AddBody(world, world_camera);
+				}
+			}
+
+			if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT))
+			{
+				selectedBody = world.GetBodyIntersect(world_camera.ScreenToWorld(GetMousePosition()));
+			}
+
+			if(selectedBody)
+			{
+				if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT) && IsKeyDown(KEY_LEFT_CONTROL)) {
+					Vector2 position = world_camera.ScreenToWorld(GetMousePosition());
+					Vector2 force = Spring::GetSpringForce(position, selectedBody->position, 0, state.SpringStiffnessValue * state.SpringMultiplierValue);
+					selectedBody->AddForce(force);
+
+					DrawLineV(selectedBody->position, position, YELLOW);
+				}
+			}
+		}
 		//update
-		timeAccum += deltaTime;
-		while (timeAccum > fixedTimeStep)
+		if (state.SimulateActive)
 		{
-			world.Step(fixedTimeStep);
-			timeAccum -= fixedTimeStep;
+			timeAccum += deltaTime;
+			while (timeAccum > fixedTimeStep)
+			{
+				world.Step(fixedTimeStep);
+				timeAccum -= fixedTimeStep;
+			}
 		}
-
 		
 
 		// draw
@@ -80,23 +138,70 @@ int main ()
 		// Setup the back buffer for drawing (clear color and depth buffers)
 		ClearBackground(BLACK);
 
-		// draw some text using the default font
-		DrawText("Hello Raylib", 200,200,20,WHITE);
-
-		// draw our texture to the screen
-		DrawTexture(wabbit, 400, 200, WHITE); 
-
+		world_camera.Begin();
 		world.Draw();
+		world_camera.End();
+
+		DrawCircleLinesV(GetMousePosition(), state.BodySizeValue, WHITE);
+
+		if (selectedBody) {
+			DrawCircleLinesV(selectedBody->position, selectedBody->size + 5, YELLOW);
+		}
+		GuiPhysics(&state);
+
 		
 		// end the frame and get ready for the next one  (display frame, poll input, etc...)
 		EndDrawing();
 	}
 
-	// cleanup
-	// unload our texture so it can be cleaned up
-	UnloadTexture(wabbit);
+	
 
 	// destroy the window and cleanup the OpenGL context
 	CloseWindow();
 	return 0;
+}
+
+void AddBody(World& world, WorldCamera& camera) {
+	Body body;
+
+	body.bodyType = (BodyType)(state.BodyTypeActive);
+
+	body.position = camera.ScreenToWorld(GetMousePosition());
+	float angle = GetRandomFloat() * (2 * PI);
+	Vector2 direction;
+	direction.x = cosf(angle);
+	direction.y = sinf(angle);
+
+	body.AddForce(direction * state.BodyVelocityValue, ForceMode::VelocityChange);
+	body.acceleration = { 0,0 };
+	body.size = state.BodySizeValue;
+	body.mass = body.size * state.BodyMassValue;
+	body.restitution = state.BodyRestitutionValue;
+	body.gravityScale = state.BodyGravityValue;
+	body.damping = state.BodyDampingValue;
+	world.AddBody(body);
+}
+
+void AddEffector(World& world, WorldCamera& camera) {
+	Vector2 position = camera.ScreenToWorld(GetMousePosition());
+	float size = state.EffectorSizeValue;
+	float force = state.EffectorForceValue;
+	float angle = state.EffectorAngleValue;
+	switch (state.EffectorTypeActive)
+	{
+	case 0:
+		world.AddEffector(new PointEffector(position, size, force));
+		break;
+	case 1:
+		world.AddEffector(new GravityEffector(position, size, force));
+		break;
+	case 2:
+		world.AddEffector(new AreaEffector(position, size, angle, force));
+		break;
+	case 3:
+		world.AddEffector(new DragEffector(position, size, force));
+		break;
+	default:
+		break;
+	}
 }

@@ -1,0 +1,36 @@
+#
+# rgl layout text file (v4.0) - raygui layout file generated using rGuiLayout
+#
+# Number of controls:     24
+#
+# Ref. window:    r <x> <y> <width> <height>
+# Anchor info:    a <id> <name> <posx> <posy> <enabled>
+# Control info:   c <id> <type> <name> <rectangle> <anchor_id> <text>
+#
+r 0 0 -1 -1
+a 001 anchor01 936 544 1
+a 002 anchor02 24 40 1
+c 000 0 PhysicsPanel 0 0 312 544 2 PHYSICS CONTROLS
+c 001 17 BodyMass 80 112 184 16 2 MASS
+c 002 17 BodySize 80 88 184 16 2 SIZE
+c 003 17 BodyGravity 80 136 184 16 2 GRAVITY
+c 004 17 BodyRestitution 80 160 184 16 2 BOUNCE
+c 005 17 BodyDamping 80 184 184 16 2 DAMPING
+c 006 11 BodyType 32 48 240 24 2 DYNAMIC;KINEMATIC;STATIC
+c 007 1 SPRING_BOX 8 256 296 120 2 SPRING
+c 008 17 SpringStiffness 80 272 184 16 2 STIFFNESS
+c 009 17 SpringDamping 80 296 184 16 2 DAMPING
+c 010 7 SpringAutoLength 104 344 16 16 2 AUTO LENGTH
+c 011 17 SpringLength 80 320 184 16 2 LENGTH
+c 012 1 EFFECTOR_BOX 8 392 296 136 2 EFFECTOR
+c 013 11 EffectorType 32 408 240 24 2 GRAVITATION;POINT;AREA;DRAG
+c 014 17 EffectorSize 80 448 184 16 2 SIZE
+c 015 16 EffectorForce 80 472 184 16 2 FORCE
+c 016 17 EffectorAngle 80 496 184 16 2 ANGLE
+c 017 8 Simulate 24 112 264 24 1 SIMULATE
+c 018 16 Gravity 72 64 184 16 1 GRAVITY
+c 019 17 FPS 72 40 184 16 1 FPS
+c 020 7 ShowDebug 112 88 16 16 1 SHOW DEBUG
+c 021 0 WorldBox 0 0 312 152 1 WORLD
+c 022 17 BodyVelocity 80 208 184 16 2 VELOCITY
+c 023 1 BodyBox 8 32 296 208 2 BODY

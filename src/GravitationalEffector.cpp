@@ -1,33 +1,36 @@
 #include "GravitationalEffector.h"
-#include <raymath.h> 
+#include <iostream>
 
-void GravityEffector::Apply(std::vector<Body>& bodies)
+void GravityEffector::Apply(std::vector<Body>& ibodies)
 {
-    for (int i = 0; i < bodies.size(); ++i)
-    {
-        for (int j = i + 1; j < bodies.size(); ++j)
-        {
-            Body& bodyA = bodies[i];
-            Body& bodyB = bodies[j];
 
-            // STEP 1: Direction vector
-            Vector2 direction = Vector2Subtract(bodyB.position, bodyA.position);
+	std::vector<Body*> obodies;
+	CollectBodiesInside(ibodies, obodies);
 
-            // STEP 2: Distance
-            float distance = Vector2Length(direction);
+	for (int i = 0; i < obodies.size(); i++)
+	{
+		for (int j = i + 1; j < obodies.size(); j++)
+		{
+			Body& bodyA = *obodies[i];
+			Body& bodyB = *obodies[j];
 
-            // STEP 3: Clamp distance
-            distance = fmaxf(distance, 1.0f);
+			// calculate vector from bodyB to bodyA
+			Vector2 direction = bodyA.position - bodyB.position;
+			float distance = Vector2Length(direction);
 
-            // STEP 4: Force magnitude (Newton's law of universal gravitation)
-            float forceMagnitude = strength * (bodyA.mass * bodyB.mass) / (distance * distance);
+			// prevent division by zero or extreme forces at very small distances
+			distance = fmaxf(distance, 1.0f);
 
-            // STEP 5: Force vector
-            Vector2 force = Vector2Scale(Vector2Normalize(direction), forceMagnitude);
+			// calculate gravitational force (F = G * ((m1 * m2) / d²))
+			float forceMagnitude = strength * ((bodyA.mass * bodyB.mass) / (distance * distance));
 
-            // STEP 6: Apply equal and opposite forces
-            bodyA.AddForce(Vector2Scale(force, 1.0f));
-            bodyB.AddForce(Vector2Scale(force, -1.0f));
-        }
-    }
+			// get normalized direction and multiply by force magnitude
+			Vector2 forceDirection = Vector2Normalize(direction) * forceMagnitude;
+
+			// apply equal and opposite forces (Newton's third law)
+			bodyA.AddForce(forceDirection * -1); // force bodyA towards bodyB
+			bodyB.AddForce(forceDirection); // force bodyB towards bodyA
+		}
+	}
 }
+
